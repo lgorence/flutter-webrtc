@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'media_stream.dart';
-import 'utils.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 
 class navigator {
   static Future<MediaStream> getUserMedia(
@@ -13,7 +12,7 @@ class navigator {
         <String, dynamic>{'constraints': mediaConstraints},
       );
       String streamId = response["streamId"];
-      MediaStream stream = new MediaStream(streamId, "local");
+      MediaStream stream = new NativeMediaStream(streamId, "local");
       stream.setMediaTracks(response['audioTracks'], response['videoTracks']);
       return stream;
     } on PlatformException catch (e) {
@@ -34,7 +33,7 @@ class navigator {
         <String, dynamic>{'constraints': mediaConstraints},
       );
       String streamId = response["streamId"];
-      MediaStream stream = new MediaStream(streamId, "local");
+      MediaStream stream = new NativeMediaStream(streamId, "local");
       stream.setMediaTracks(response['audioTracks'], response['videoTracks']);
       return stream;
     } on PlatformException catch (e) {

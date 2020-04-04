@@ -1,13 +1,9 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'media_stream.dart';
-import 'media_stream_track.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 import 'rtc_data_channel.dart';
-import 'rtc_ice_candidate.dart';
-import 'rtc_session_description.dart';
 import 'rtc_stats_report.dart';
-import 'utils.dart';
-import 'enums.dart';
+import '../enums.dart';
 
 /*
  * Delegate for PeerConnection.
@@ -103,7 +99,7 @@ class RTCPeerConnection {
 
         MediaStream stream =
             _remoteStreams.firstWhere((it) => it.id == streamId, orElse: () {
-          var newStream = new MediaStream(streamId, _peerConnectionId);
+          var newStream = new NativeMediaStream(streamId, _peerConnectionId);
           newStream.setMediaTracks(map['audioTracks'], map['videoTracks']);
           _remoteStreams.add(newStream);
           return newStream;
@@ -124,13 +120,13 @@ class RTCPeerConnection {
         String streamId = map['streamId'];
         Map<dynamic, dynamic> track = map['track'];
 
-        MediaStreamTrack newTrack = new MediaStreamTrack(
+        MediaStreamTrack newTrack = new NativeMediaStreamTrack(
             map['trackId'], track['label'], track['kind'], track['enabled']);
         String kind = track["kind"];
 
         MediaStream stream =
             _remoteStreams.firstWhere((it) => it.id == streamId, orElse: () {
-          var newStream = new MediaStream(streamId, _peerConnectionId);
+          var newStream = new NativeMediaStream(streamId, _peerConnectionId);
           _remoteStreams.add(newStream);
           return newStream;
         });
@@ -154,7 +150,7 @@ class RTCPeerConnection {
           return null;
         });
         Map<dynamic, dynamic> track = map['track'];
-        MediaStreamTrack oldTrack = new MediaStreamTrack(
+        MediaStreamTrack oldTrack = new NativeMediaStreamTrack(
             map['trackId'], track['label'], track['kind'], track['enabled']);
         if (this.onRemoveTrack != null) this.onRemoveTrack(stream, oldTrack);
         break;
@@ -162,7 +158,7 @@ class RTCPeerConnection {
         int dataChannelId = map['id'];
         String label = map['label'];
         _dataChannel =
-            new RTCDataChannel(this._peerConnectionId, label, dataChannelId);
+            new NativeRTCDataChannel(this._peerConnectionId, label, dataChannelId);
         if (this.onDataChannel != null) this.onDataChannel(_dataChannel);
         break;
       case 'onRenegotiationNeeded':
@@ -350,7 +346,7 @@ class RTCPeerConnection {
         'dataChannelDict': dataChannelDict.toMap()
       });
       _dataChannel =
-          new RTCDataChannel(this._peerConnectionId, label, dataChannelDict.id);
+          new NativeRTCDataChannel(this._peerConnectionId, label, dataChannelDict.id);
       return _dataChannel;
     } on PlatformException catch (e) {
       throw 'Unable to RTCPeerConnection::createDataChannel: ${e.message}';

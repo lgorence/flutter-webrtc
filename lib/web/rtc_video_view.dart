@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'dart:html' as HTML;
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/abstractions/rtc_video_view.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 
-import 'media_stream.dart';
 import '../enums.dart';
 
 typedef void VideoRotationChangeCallback(int textureId, int rotation);
 typedef void VideoSizeChangeCallback(
     int textureId, double width, double height);
 
-class RTCVideoRenderer {
+class WebRTCVideoRenderer extends RTCVideoRenderer {
   double _width = 0.0, _height = 0.0;
   bool _mirror = false;
   MediaStream _srcObject;
@@ -20,8 +21,6 @@ class RTCVideoRenderer {
   VideoRotationChangeCallback onVideoRotationChanged;
   dynamic onFirstFrameRendered;
   var isFirstFrameRendered = false;
-
-  dynamic onStateChanged;
 
   HtmlElementView htmlElementView;
   HTML.VideoElement _htmlVideoElement;
@@ -33,8 +32,9 @@ class RTCVideoRenderer {
 
   static void fixVideoElements() => _videoViews.forEach((v) => v.play());
 
-  initialize() async {
-    print("You don't have to call RTCVideoRenderer.initialize on Flutter Web");
+  WebRTCVideoRenderer(bool forceMute) : super.create(forceMute);
+
+  Future<void> init() async {
   }
 
   int get rotation => 0;
@@ -68,6 +68,7 @@ class RTCVideoRenderer {
 
   set srcObject(MediaStream stream) {
     _srcObject = stream;
+    var webStream = stream as WebMediaStream;
 
     if (_srcObject == null) {
       findHtmlView()?.srcObject = null;
@@ -75,14 +76,14 @@ class RTCVideoRenderer {
     }
 
     if (htmlElementView != null) {
-      findHtmlView()?.srcObject = stream?.jsStream;
+      findHtmlView()?.srcObject = webStream?.jsStream;
     }
     // ignore: undefined_prefixed_name
     ui.platformViewRegistry.registerViewFactory(stream.id, (int viewId) {
       final x = HTML.VideoElement();
       x.autoplay = true;
-      x.muted = false;
-      x.srcObject = stream.jsStream;
+      x.muted = forceMute;
+      x.srcObject = webStream.jsStream;
       _htmlVideoElement = x;
       _videoViews.add(x);
       return x;
@@ -93,10 +94,11 @@ class RTCVideoRenderer {
 
   void findAndApply(Size size) {
     final htmlView = findHtmlView();
+    var webStream = _srcObject as WebMediaStream;
     if (_srcObject != null && htmlView != null) {
       if (htmlView.width == size.width.toInt() &&
           htmlView.height == size.height.toInt()) return;
-      htmlView.srcObject = _srcObject.jsStream;
+      htmlView.srcObject = webStream.jsStream;
       htmlView.width = size.width.toInt();
       htmlView.height = size.height.toInt();
       htmlView.onLoadedMetadata.listen((_) {
@@ -142,20 +144,20 @@ class RTCVideoRenderer {
     return (fltPv.first as HTML.Element).shadowRoot.lastChild;
   }
 
-  Future<Null> dispose() async {
+  Future<void> dispose() async {
     //TODO?
   }
 }
 
-class RTCVideoView extends StatefulWidget {
-  final RTCVideoRenderer _renderer;
-  RTCVideoView(this._renderer);
+class WebRTCVideoView extends RTCVideoView {
+  WebRTCVideoView(RTCVideoRenderer renderer) : super.create(renderer);
+
   @override
-  _RTCVideoViewState createState() => new _RTCVideoViewState(_renderer);
+  _RTCVideoViewState createState() => new _RTCVideoViewState(renderer);
 }
 
 class _RTCVideoViewState extends State<RTCVideoView> {
-  final RTCVideoRenderer _renderer;
+  final WebRTCVideoRenderer _renderer;
   double _aspectRatio;
   RTCVideoViewObjectFit _objectFit;
   bool _mirror;

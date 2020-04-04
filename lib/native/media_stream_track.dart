@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'utils.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 
-class MediaStreamTrack {
+class NativeMediaStreamTrack extends MediaStreamTrack {
   MethodChannel _channel = WebRTC.methodChannel();
   String _trackId;
   String _label;
   String _kind;
   bool _enabled;
 
-  MediaStreamTrack(this._trackId, this._label, this._kind, this._enabled);
+  NativeMediaStreamTrack(this._trackId, this._label, this._kind, this._enabled);
 
   set enabled(bool enabled) {
     _channel.invokeMethod('mediaStreamTrackSetEnable',

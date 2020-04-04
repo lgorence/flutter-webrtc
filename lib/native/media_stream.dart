@@ -1,29 +1,29 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 import 'media_stream_track.dart';
-import 'utils.dart';
 
-class MediaStream {
+class NativeMediaStream extends MediaStream {
   MethodChannel _channel = WebRTC.methodChannel();
   String _streamId;
   String _ownerTag;
   List<MediaStreamTrack> _audioTracks = new List<MediaStreamTrack>();
   List<MediaStreamTrack> _videoTracks = new List<MediaStreamTrack>();
-  MediaStream(this._streamId, this._ownerTag);
+  NativeMediaStream(this._streamId, this._ownerTag);
 
   String get ownerTag => _ownerTag;
 
   void setMediaTracks(List<dynamic> audioTracks, List<dynamic> videoTracks) {
     List<MediaStreamTrack> newAudioTracks = new List();
     audioTracks.forEach((track) {
-      newAudioTracks.add(new MediaStreamTrack(
+      newAudioTracks.add(new NativeMediaStreamTrack(
           track["id"], track["label"], track["kind"], track["enabled"]));
     });
     _audioTracks = newAudioTracks;
 
     List<MediaStreamTrack> newVideoTracks = new List();
     videoTracks.forEach((track) {
-      newVideoTracks.add(new MediaStreamTrack(
+      newVideoTracks.add(new NativeMediaStreamTrack(
           track["id"], track["label"], track["kind"], track["enabled"]));
     });
     _videoTracks = newVideoTracks;
@@ -40,7 +40,7 @@ class MediaStream {
 
     List<MediaStreamTrack> newAudioTracks = new List();
     audioTracks.forEach((track) {
-      newAudioTracks.add(new MediaStreamTrack(
+      newAudioTracks.add(new NativeMediaStreamTrack(
           track["id"], track["label"], track["kind"], track["enabled"]));
     });
     _audioTracks = newAudioTracks;
@@ -48,7 +48,7 @@ class MediaStream {
     List<MediaStreamTrack> newVideoTracks = new List();
     List<dynamic> videoTracks = response['videoTracks'];
     videoTracks.forEach((track) {
-      newVideoTracks.add(new MediaStreamTrack(
+      newVideoTracks.add(new NativeMediaStreamTrack(
           track["id"], track["label"], track["kind"], track["enabled"]));
     });
     _videoTracks = newVideoTracks;

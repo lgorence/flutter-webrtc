@@ -3,7 +3,7 @@ import 'dart:js' as JS;
 import 'dart:js_util' as JSUtils;
 import 'dart:html' as HTML;
 
-import 'media_stream.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 
 class navigator {
   static Future<MediaStream> getUserMedia(
@@ -18,7 +18,7 @@ class navigator {
       final jsStream = await nav.getUserMedia(
           audio: mediaConstraints['audio'] ?? false,
           video: mediaConstraints['video'] ?? false);
-      return MediaStream(jsStream);
+      return WebMediaStream(jsStream);
     } catch (e) {
       throw 'Unable to getUserMedia: ${e.toString()}';
     }
@@ -34,13 +34,13 @@ class navigator {
         final HTML.MediaStream jsStream =
             await JSUtils.promiseToFuture<HTML.MediaStream>(
                 JSUtils.callMethod(mediaDevices, 'getDisplayMedia', [arg]));
-        return MediaStream(jsStream);
+        return WebMediaStream(jsStream);
       } else {
         final HTML.MediaStream jsStream = await HTML.window.navigator
             .getUserMedia(
                 video: {"mediaSource": 'screen'},
                 audio: mediaConstraints['audio'] ?? false);
-        return MediaStream(jsStream);
+        return WebMediaStream(jsStream);
       }
     } catch (e) {
       throw 'Unable to getDisplayMedia: ${e.toString()}';

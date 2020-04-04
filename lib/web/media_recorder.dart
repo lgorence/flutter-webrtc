@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:js' as JS;
 import 'dart:html' as HTML;
 
-import 'media_stream.dart';
-import 'media_stream_track.dart';
+import 'package:flutter_webrtc/webrtc.dart';
+
 import '../enums.dart';
 
 class MediaRecorder {
@@ -28,7 +28,9 @@ class MediaRecorder {
   startWeb(MediaStream stream,
       {Function(dynamic blob, bool isLastOne) onDataChunk,
       String mimeType = 'video/webm'}) {
-    _recorder = HTML.MediaRecorder(stream.jsStream, {'mimeType': mimeType});
+    var webStream = stream as WebMediaStream;
+
+    _recorder = HTML.MediaRecorder(webStream.jsStream, {'mimeType': mimeType});
     if (onDataChunk == null) {
       _chunks = List();
       _completer = Completer();

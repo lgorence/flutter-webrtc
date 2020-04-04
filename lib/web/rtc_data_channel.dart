@@ -1,82 +1,12 @@
 import 'dart:async';
 import 'dart:html' as HTML;
 import 'dart:js_util' as JSUtils;
-import 'dart:typed_data';
+
+import 'package:flutter_webrtc/webrtc.dart';
 
 import '../enums.dart';
 
-final _typeStringToMessageType = <String, MessageType>{
-  'text': MessageType.text,
-  'binary': MessageType.binary
-};
-
-final _messageTypeToTypeString = <MessageType, String>{
-  MessageType.text: 'text',
-  MessageType.binary: 'binary'
-};
-
-class RTCDataChannelInit {
-  bool ordered = true;
-  int maxRetransmitTime = -1;
-  int maxRetransmits = -1;
-  String protocol = 'sctp'; //sctp | quic
-  String binaryType = 'text'; // "binary" || text
-  bool negotiated = false;
-  int id = 0;
-  Map<String, dynamic> toMap() {
-    return {
-      'ordered': ordered,
-      if (maxRetransmitTime > 0)
-        //https://www.chromestatus.com/features/5198350873788416
-        'maxPacketLifeTime': maxRetransmitTime,
-      if (maxRetransmits > 0) 'maxRetransmits': maxRetransmits,
-      'protocol': protocol,
-      'negotiated': negotiated,
-      if (id != 0) 'id': id
-    };
-  }
-}
-
-/// A class that represents a datachannel message.
-/// Can either contain binary data as a [Uint8List] or
-/// text data as a [String].
-class RTCDataChannelMessage {
-  dynamic _data;
-  bool _isBinary;
-
-  /// Construct a text message with a [String].
-  RTCDataChannelMessage(String text) {
-    this._data = text;
-    this._isBinary = false;
-  }
-
-  /// Construct a binary message with a [Uint8List].
-  RTCDataChannelMessage.fromBinary(Uint8List binary) {
-    this._data = binary;
-    this._isBinary = true;
-  }
-
-  /// Tells whether this message contains binary.
-  /// If this is false, it's a text message.
-  bool get isBinary => _isBinary;
-
-  MessageType get type => isBinary ? MessageType.binary : MessageType.text;
-
-  /// Text contents of this message as [String].
-  /// Use only on text messages.
-  /// See: [isBinary].
-  String get text => _data;
-
-  /// Binary contents of this message as [Uint8List].
-  /// Use only on binary messages.
-  /// See: [isBinary].
-  Uint8List get binary => _data;
-}
-
-typedef void RTCDataChannelStateCallback(RTCDataChannelState state);
-typedef void RTCDataChannelOnMessageCallback(RTCDataChannelMessage data);
-
-class RTCDataChannel {
+class WebRTCDataChannel extends RTCDataChannel {
   final HTML.RtcDataChannel _jsDc;
   RTCDataChannelStateCallback onDataChannelState;
   RTCDataChannelOnMessageCallback onMessage;
@@ -98,7 +28,7 @@ class RTCDataChannel {
   /// Closes when the [RTCDataChannel] is closed.
   Stream<RTCDataChannelMessage> messageStream;
 
-  RTCDataChannel(this._jsDc) {
+  WebRTCDataChannel(this._jsDc) {
     stateChangeStream = _stateChangeController.stream;
     messageStream = _messageController.stream;
     _jsDc.onClose.listen((_) {
@@ -151,5 +81,13 @@ class RTCDataChannel {
   Future<void> close() {
     _jsDc.close();
     return Future.value();
+  }
+
+  @override
+  void errorListener(Object obj) {
+  }
+
+  @override
+  void eventListener(Object obj) {
   }
 }

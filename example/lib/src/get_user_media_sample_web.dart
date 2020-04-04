@@ -44,7 +44,7 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
   }
 
   initRenderers() async {
-    await _localRenderer.initialize();
+    await _localRenderer.init();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.

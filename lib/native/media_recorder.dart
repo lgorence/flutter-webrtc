@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'media_stream.dart';
-import 'media_stream_track.dart';
-import 'utils.dart';
-import 'enums.dart';
+import 'package:flutter_webrtc/webrtc.dart';
+
+import '../enums.dart';
 
 class MediaRecorder {
   static final _random = Random();

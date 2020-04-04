@@ -3,13 +3,9 @@ import 'dart:js' as JS;
 import 'dart:js_util' as JSUtils;
 import 'dart:html' as HTML;
 
-import 'media_stream.dart';
-import 'media_stream_track.dart';
-import 'rtc_data_channel.dart';
-import 'rtc_ice_candidate.dart';
-import 'rtc_session_description.dart';
-import '../rtc_stats_report.dart';
-import '../utils.dart';
+import 'package:flutter_webrtc/webrtc.dart';
+
+import '../native/rtc_stats_report.dart';
 import '../enums.dart';
 
 /*
@@ -64,14 +60,14 @@ class RTCPeerConnection {
     _jsPc.onAddStream.listen((mediaStreamEvent) {
       final jsStream = mediaStreamEvent.stream;
       print("onaddstream argument: $jsStream");
-      final mediaStream = MediaStream(jsStream);
+      final mediaStream = WebMediaStream(jsStream);
       if (onAddStream != null) {
         onAddStream(mediaStream);
       }
       jsStream.onAddTrack.listen((mediaStreamTrackEvent) {
         final jsTrack =
             (mediaStreamTrackEvent as HTML.MediaStreamTrackEvent).track;
-        final MediaStreamTrack track = MediaStreamTrack(jsTrack);
+        final MediaStreamTrack track = WebMediaStreamTrack(jsTrack);
         mediaStream.addTrack(track, addToNative: false);
         if (onAddTrack != null) {
           onAddTrack(mediaStream, track);
@@ -80,7 +76,7 @@ class RTCPeerConnection {
       jsStream.onRemoveTrack.listen((mediaStreamTrackEvent) {
         final jsTrack =
             (mediaStreamTrackEvent as HTML.MediaStreamTrackEvent).track;
-        final MediaStreamTrack track = MediaStreamTrack(jsTrack);
+        final MediaStreamTrack track = WebMediaStreamTrack(jsTrack);
         mediaStream.removeTrack(track, removeFromNative: false);
         if (onRemoveTrack != null) {
           onRemoveTrack(mediaStream, track);
@@ -89,7 +85,7 @@ class RTCPeerConnection {
     });
     _jsPc.onDataChannel.listen((dataChannelEvent) {
       if (onDataChannel != null) {
-        final dc = RTCDataChannel(dataChannelEvent.channel);
+        final dc = WebRTCDataChannel(dataChannelEvent.channel);
         onDataChannel(dc);
       }
     });
@@ -115,7 +111,7 @@ class RTCPeerConnection {
     });
     _jsPc.onRemoveStream.listen((mediaStreamEvent) {
       final jsStream = mediaStreamEvent.stream;
-      final mediaStream = MediaStream(jsStream);
+      final mediaStream = WebMediaStream(jsStream);
       if (onRemoveStream != null) {
         onRemoveStream(mediaStream);
       }
@@ -161,12 +157,14 @@ class RTCPeerConnection {
   }
 
   Future<void> addStream(MediaStream stream) {
-    _jsPc.addStream(stream.jsStream);
+    var webStream = stream as WebMediaStream;
+    _jsPc.addStream(webStream.jsStream);
     return Future.value();
   }
 
   Future<void> removeStream(MediaStream stream) async {
-    _jsPc.removeStream(stream.jsStream);
+    var webStream = stream as WebMediaStream;
+    _jsPc.removeStream(webStream.jsStream);
     return Future.value();
   }
 
@@ -202,11 +200,11 @@ class RTCPeerConnection {
   }
 
   List<MediaStream> getLocalStreams() =>
-      _jsPc.getLocalStreams().map((jsStream) => MediaStream(jsStream)).toList();
+      _jsPc.getLocalStreams().map((jsStream) => WebMediaStream(jsStream)).toList();
 
   List<MediaStream> getRemoteStreams() => _jsPc
       .getRemoteStreams()
-      .map((jsStream) => MediaStream(jsStream))
+      .map((jsStream) => WebMediaStream(jsStream))
       .toList();
 
   Future<RTCDataChannel> createDataChannel(
@@ -215,7 +213,7 @@ class RTCPeerConnection {
     if (dataChannelDict.binaryType == 'binary')
       map['binaryType'] = 'arraybuffer'; // Avoid Blob in data channel
     final jsDc = _jsPc.createDataChannel(label, map);
-    return Future.value(RTCDataChannel(jsDc));
+    return Future.value(WebRTCDataChannel(jsDc));
   }
 
   Future<Null> close() async {

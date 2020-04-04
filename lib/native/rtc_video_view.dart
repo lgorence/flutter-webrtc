@@ -2,25 +2,26 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_webrtc/abstractions/rtc_video_view.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 import 'media_stream.dart';
-import 'utils.dart';
-import 'enums.dart';
+import '../enums.dart';
 
-class RTCVideoRenderer {
+class NativeRTCVideoRenderer extends RTCVideoRenderer {
   MethodChannel _channel = WebRTC.methodChannel();
   int _textureId;
   int _rotation = 0;
   double _width = 0.0, _height = 0.0;
   bool _mirror = false;
-  double _aspectRatio = 1.0;
   MediaStream _srcObject;
   RTCVideoViewObjectFit _objectFit =
       RTCVideoViewObjectFit.RTCVideoViewObjectFitContain;
   StreamSubscription<dynamic> _eventSubscription;
+  bool isMuted = false;
 
-  dynamic onStateChanged;
+  NativeRTCVideoRenderer(bool forceMute) : super.create(forceMute);
 
-  initialize() async {
+  init() async {
     final Map<dynamic, dynamic> response =
         await _channel.invokeMethod('createVideoRenderer', {});
     _textureId = response['textureId'];
@@ -62,15 +63,17 @@ class RTCVideoRenderer {
   }
 
   set srcObject(MediaStream stream) {
+    var nativeStream = stream as NativeMediaStream;
+
     _srcObject = stream;
     _channel.invokeMethod('videoRendererSetSrcObject', <String, dynamic>{
       'textureId': _textureId,
       'streamId': stream != null ? stream.id : '',
-      'ownerTag': stream != null ? stream.ownerTag : ''
+      'ownerTag': stream != null ? nativeStream.ownerTag : ''
     });
   }
 
-  Future<Null> dispose() async {
+  Future<void> dispose() async {
     await _eventSubscription?.cancel();
     await _channel.invokeMethod(
       'videoRendererDispose',
@@ -106,9 +109,9 @@ class RTCVideoRenderer {
   }
 }
 
-class RTCVideoView extends StatefulWidget {
-  final RTCVideoRenderer _renderer;
-  RTCVideoView(this._renderer, {Key key}) : super(key: key);
+class NativeRTCVideoView extends RTCVideoView {
+  NativeRTCVideoView(RTCVideoRenderer renderer) : super.create(renderer);
+
   @override
   _RTCVideoViewState createState() => new _RTCVideoViewState();
 }
@@ -122,52 +125,61 @@ class _RTCVideoViewState extends State<RTCVideoView> {
   void initState() {
     super.initState();
     _setCallbacks();
-    _aspectRatio = widget._renderer.aspectRatio;
-    _mirror = widget._renderer.mirror;
-    _objectFit = widget._renderer.objectFit;
+
+    var renderer = widget.renderer as NativeRTCVideoRenderer;
+    _aspectRatio = renderer.aspectRatio;
+    _mirror = renderer.mirror;
+    _objectFit = renderer.objectFit;
   }
 
   @override
   void dispose() {
     super.dispose();
-    widget._renderer.onStateChanged = null;
+    widget.renderer.onStateChanged = null;
   }
 
   void _setCallbacks() {
-    widget._renderer.onStateChanged = () {
+    var renderer = widget.renderer as NativeRTCVideoRenderer;
+
+    widget.renderer.onStateChanged = () {
       setState(() {
-        _aspectRatio = widget._renderer.aspectRatio;
-        _mirror = widget._renderer.mirror;
-        _objectFit = widget._renderer.objectFit;
+        _aspectRatio = renderer.aspectRatio;
+        _mirror = renderer.mirror;
+        _objectFit = renderer.objectFit;
       });
     };
   }
 
   Widget _buildVideoView(BoxConstraints constraints) {
+    var renderer = widget.renderer as NativeRTCVideoRenderer;
+
     return Container(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: FittedBox(
-            fit:
-                _objectFit == RTCVideoViewObjectFit.RTCVideoViewObjectFitContain
-                    ? BoxFit.contain
-                    : BoxFit.cover,
-            child: new Center(
-                child: new SizedBox(
-                    width: constraints.maxHeight * _aspectRatio,
-                    height: constraints.maxHeight,
-                    child: new Transform(
-                        transform: Matrix4.identity()
-                          ..rotateY(_mirror ? -pi : 0.0),
-                        alignment: FractionalOffset.center,
-                        child:
-                            new Texture(textureId: widget._renderer._textureId))))));
+      width: constraints.maxWidth,
+      height: constraints.maxHeight,
+      child: FittedBox(
+        fit: _objectFit == RTCVideoViewObjectFit.RTCVideoViewObjectFitContain
+            ? BoxFit.contain
+            : BoxFit.cover,
+        child: new Center(
+          child: new SizedBox(
+            width: constraints.maxHeight * _aspectRatio,
+            height: constraints.maxHeight,
+            child: new Transform(
+              transform: Matrix4.identity()..rotateY(_mirror ? -pi : 0.0),
+              alignment: FractionalOffset.center,
+              child: new Texture(textureId: renderer._textureId),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    var renderer = widget.renderer as NativeRTCVideoRenderer;
     bool renderVideo =
-        (widget._renderer._textureId != null && widget._renderer._srcObject != null);
+        (renderer._textureId != null && renderer._srcObject != null);
 
     return new LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {

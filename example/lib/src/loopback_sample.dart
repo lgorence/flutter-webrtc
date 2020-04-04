@@ -36,8 +36,8 @@ class _MyAppState extends State<LoopBackSample> {
   }
 
   initRenderers() async {
-    await _localRenderer.initialize();
-    await _remoteRenderer.initialize();
+    await _localRenderer.init();
+    await _remoteRenderer.init();
   }
 
   void handleStatsReport(Timer timer) async {

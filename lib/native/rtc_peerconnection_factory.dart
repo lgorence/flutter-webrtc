@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 import 'rtc_peerconnection.dart';
-import 'utils.dart';
 
 Future<RTCPeerConnection> createPeerConnection(
     Map<String, dynamic> configuration,

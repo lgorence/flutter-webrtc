@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:html' as HTML;
 import 'dart:js' as JS;
 
-class MediaStreamTrack {
+import 'package:flutter_webrtc/webrtc.dart';
+
+class WebMediaStreamTrack extends MediaStreamTrack {
   final HTML.MediaStreamTrack jsTrack;
 
-  MediaStreamTrack(this.jsTrack);
+  WebMediaStreamTrack(this.jsTrack);
 
   set enabled(bool enabled) => jsTrack.enabled = enabled;
 
@@ -60,5 +62,15 @@ class MediaStreamTrack {
   Future<void> dispose() {
     jsTrack.stop();
     return Future.value();
+  }
+
+  @override
+  Future<bool> hasTorch() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> setTorch(bool torch) {
+    throw UnimplementedError();
   }
 }

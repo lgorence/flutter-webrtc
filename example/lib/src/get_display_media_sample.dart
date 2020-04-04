@@ -38,7 +38,7 @@ class _GetDisplayMediaSampleState extends State<GetDisplayMediaSample> {
   }
 
   initRenderers() async {
-    await _localRenderer.initialize();
+    await _localRenderer.init();
   }
 
   void handleTimer(Timer timer) async {
